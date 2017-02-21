@@ -1,6 +1,7 @@
 <?php
 namespace App\Service;
 
+use App\Entity\KernelCall;
 use App\Entity\ProcessInterface;
 use App\Service\Kernel\KernelInterface;
 
@@ -36,18 +37,22 @@ class Server
         }
     }
 
-    function waitIoRead($socket): callable
+    function waitIoRead($socket): KernelCall
     {
-        return function (ProcessInterface $task, KernelInterface $scheduler) use ($socket) {
-            $scheduler->handleIoRead($socket, $task);
-        };
+        return new KernelCall(
+            function (ProcessInterface $task, KernelInterface $scheduler) use ($socket) {
+                $scheduler->handleIoRead($socket, $task);
+            }
+        );
     }
 
-    function waitIoWrite($socket): callable
+    function waitIoWrite($socket): KernelCall
     {
-        return function (ProcessInterface $task, KernelInterface $scheduler) use ($socket) {
-            $scheduler->handleIoWrite($socket, $task);
-        };
+        return new KernelCall(
+            function (ProcessInterface $task, KernelInterface $scheduler) use ($socket) {
+                $scheduler->handleIoWrite($socket, $task);
+            }
+        );
     }
 
     function handleClient($socket): \Generator

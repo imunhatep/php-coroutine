@@ -6,15 +6,18 @@ set_time_limit(0);
 
 use App\Entity\ProcessInterface;
 use App\Service\KernelLoop;
+use App\Entity\KernelCall;
 use App\Service\Server;
 use App\Service\Kernel\KernelInterface;
 
 function newCallback(\Generator $coroutine): callable
 {
-    return function (ProcessInterface $task, KernelInterface $scheduler) use ($coroutine) {
-        $task->setSendValue($scheduler->schedule($coroutine));
-        $scheduler->scheduleProcess($task);
-    };
+    return new KernelCall(
+        function (ProcessInterface $task, KernelInterface $scheduler) use ($coroutine) {
+            $task->setSendValue($scheduler->schedule($coroutine));
+            $scheduler->scheduleProcess($task);
+        }
+    );
 }
 
 function logUsedMemory()

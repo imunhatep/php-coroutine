@@ -1,6 +1,7 @@
 <?php
 namespace App\Service\Kernel;
 
+use App\Entity\KernelCall;
 use App\Entity\Process;
 use App\Entity\ProcessInterface;
 use App\Entity\ResourceList;
@@ -174,7 +175,7 @@ abstract class AbstractKernel implements KernelInterface
         //dump('Tick pid: '. $process->getPid());
 
         $retVal = $process();
-        if ($retVal and is_callable($retVal)) {
+        if ($retVal and ($retVal instanceof KernelCall)) {
             $retVal($process, $this);
 
             return;
