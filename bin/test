@@ -1,0 +1,45 @@
+#!/usr/bin/env php
+<?php
+set_time_limit(0);
+
+(@include_once __DIR__.'/../vendor/autoload.php') || @include_once __DIR__.'/../../../autoload.php';
+
+use App\Entity\ProcessInterface;
+use App\Service\KernelLoop;
+use App\Service\Server;
+use App\Service\Kernel\KernelInterface;
+
+function newCallback(\Generator $coroutine): callable
+{
+    return function (ProcessInterface $task, KernelInterface $scheduler) use ($coroutine) {
+        $task->setSendValue($scheduler->schedule($coroutine));
+        $scheduler->scheduleProcess($task);
+    };
+}
+
+function logUsedMemory()
+{
+    return function () {
+        $mem = memory_get_usage(true);
+        $pMem = memory_get_peak_usage(true);
+
+        dump(
+            sprintf(
+                '[%s] Memory in use: %0.1fM, peak: %0.1fM',
+                date('H:i:s'),
+                ($mem / 1024 / 1024),
+                ($pMem / 1024 / 1024)
+            )
+        );
+    };
+}
+
+$server = new Server('127.0.0.1', 8000);
+
+/** @var KernelInterface $scheduler */
+$scheduler = new KernelLoop;
+$scheduler->schedule($server());
+$scheduler->addPeriodicTimer(5, logUsedMemory());
+$scheduler->run();
+
+
