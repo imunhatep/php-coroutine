@@ -152,7 +152,7 @@ abstract class AbstractKernel implements KernelInterface
             $this->timerQueue->tick();
             $this->tick();
 
-            //gc_collect_cycles();
+            gc_collect_cycles();
         }
     }
 
