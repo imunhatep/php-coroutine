@@ -4,18 +4,32 @@ namespace App\Service;
 use App\Entity\KernelCall;
 use App\Entity\ProcessInterface;
 use App\Service\Kernel\KernelInterface;
+use Collection\Map;
+use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\Psr7\ServerRequest;
+use mindplay\middleman\Dispatcher;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use RingCentral\Psr7;
 
 class Server
 {
     const MTU_SIZE = 1500; // default MTU packet size
 
+    /** @var string */
     private $host;
+
+    /** @var int */
     private $port;
 
-    function __construct(string $host, int $port)
+    /** @var Dispatcher  */
+    private $dispatcher;
+
+    function __construct(string $host, int $port, Dispatcher $dispatcher)
     {
         $this->host = $host;
         $this->port = $port;
+        $this->dispatcher = $dispatcher;
     }
 
     function __invoke(): \Generator
@@ -59,6 +73,36 @@ class Server
     {
         yield $this->waitIoRead($socket);
 
+        /** @var ServerRequestInterface $request */
+        $request = $this->parseRequest($this->readFromSocket($socket));
+
+        /** @var ResponseInterface $response */
+        $response = $this->dispatcher->dispatch($request);
+
+        yield $this->waitIoWrite($socket);
+
+        $this->sendResponse($socket, $response);
+        stream_socket_shutdown($socket, STREAM_SHUT_RDWR);
+    }
+
+    protected function sendResponse($socket, ResponseInterface $response)
+    {
+        $rawHeaders = (new Map)
+            ->setAll($response->getHeaders())
+            ->foldLeft(
+                "HTTP/1.1 200 OK\r\n",
+                function(string $memo, string $name, array $value): string {
+                    return $memo . ucfirst($name).': '. implode(';', $value)."\r\n";
+                }
+            );
+
+
+        stream_socket_sendto($socket, trim($rawHeaders, "\n\r"));
+        stream_socket_sendto($socket, "\r\n\r\n" . (string) $response->getBody());
+    }
+
+    protected function readFromSocket($socket): string
+    {
         $contents = '';
         while (!feof($socket)) {
             $buf = stream_socket_recvfrom($socket, self::MTU_SIZE);
@@ -69,21 +113,34 @@ class Server
             }
         }
 
-        $msg = "Received following request:\n\n$contents";
-        $msgLength = strlen($msg);
-
-        $response = <<<RESP
-HTTP/1.1 200 OK\r
-Content-Type: text/plain\r
-Content-Length: $msgLength\r
-Connection: close\r
-\r
-$msg
-RESP;
-
-        yield $this->waitIoWrite($socket);
-
-        stream_socket_sendto($socket, $response);
-        stream_socket_shutdown($socket, STREAM_SHUT_RDWR);
+        return $contents;
     }
+
+    protected function parseRequest($data): ServerRequestInterface
+    {
+        list($headers, $bodyBuffer) = explode("\r\n\r\n", $data, 2);
+
+        $psrRequest = Psr7\parse_request($headers);
+
+        $headers = array_map(
+            function ($val) {
+                if (1 === count($val)) {
+                    $val = $val[0];
+                }
+
+                return $val;
+            },
+            $psrRequest->getHeaders()
+        );
+
+        return new ServerRequest(
+            $psrRequest->getMethod(),
+            $psrRequest->getUri(),
+            $headers,
+            $bodyBuffer,
+            $psrRequest->getProtocolVersion(),
+            $_SERVER
+        );
+    }
+
 }

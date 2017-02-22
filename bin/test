@@ -9,6 +9,7 @@ use App\Service\KernelLoop;
 use App\Entity\KernelCall;
 use App\Service\Server;
 use App\Service\Kernel\KernelInterface;
+use mindplay\middleman\Dispatcher;
 
 function newCallback(\Generator $coroutine): callable
 {
@@ -37,12 +38,16 @@ function logUsedMemory()
     };
 }
 
-$server = new Server('127.0.0.1', 8000);
+$dispatcher = new Dispatcher([
+    new \App\Controller\DummyController()
+]);
+
+$server = new Server('127.0.0.1', 8000, $dispatcher);
 
 /** @var KernelInterface $scheduler */
 $scheduler = new KernelLoop;
 $scheduler->schedule($server());
-$scheduler->addPeriodicTimer(5, logUsedMemory());
+$scheduler->addPeriodicTimer(60, logUsedMemory());
 $scheduler->run();
 
 
