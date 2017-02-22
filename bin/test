@@ -4,21 +4,15 @@ set_time_limit(0);
 
 (@include_once __DIR__.'/../vendor/autoload.php') || @include_once __DIR__.'/../../../autoload.php';
 
-use App\Entity\ProcessInterface;
-use App\Service\KernelLoop;
-use App\Entity\KernelCall;
-use App\Service\Server;
 use App\Service\Kernel\KernelInterface;
-use mindplay\middleman\Dispatcher;
+use App\Service\KernelLoop;
 
-function newCallback(\Generator $coroutine): callable
+function counter(int $id, int $till = 10): \Generator
 {
-    return new KernelCall(
-        function (ProcessInterface $task, KernelInterface $scheduler) use ($coroutine) {
-            $task->setSendValue($scheduler->schedule($coroutine));
-            $scheduler->scheduleProcess($task);
-        }
-    );
+    for($i=0;$i < $till; $i++){
+        yield;
+        dump(sprintf("[Counter #%d]:    %d", $id, $i));
+    }
 }
 
 function logUsedMemory()
@@ -38,18 +32,12 @@ function logUsedMemory()
     };
 }
 
-$server = new Server(
-    '127.0.0.1',
-    8000,
-    new Dispatcher([
-        new \App\Controller\DummyController()
-    ])
-);
-
 /** @var KernelInterface $scheduler */
 $scheduler = new KernelLoop;
-$scheduler->addPeriodicTimer(60, logUsedMemory());
-$scheduler->schedule($server());
+$scheduler->addPeriodicTimer(5, logUsedMemory());
+$scheduler->schedule(counter(1, 5));
+$scheduler->schedule(counter(2, 2));
 $scheduler->run();
+
 
 
