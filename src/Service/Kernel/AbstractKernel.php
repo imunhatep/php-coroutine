@@ -51,7 +51,7 @@ abstract class AbstractKernel implements KernelInterface
 
     function scheduleProcess(ProcessInterface $process): int
     {
-        $this->addProcess(++$this->processId, $process);
+        $this->enqueueProcess(++$this->processId, $process);
 
         return $this->processId;
     }
@@ -182,7 +182,7 @@ abstract class AbstractKernel implements KernelInterface
         }
 
         if (!$process->isFinished()) {
-            $this->addProcess($process->getPid(), $process);
+            $this->enqueueProcess($process->getPid(), $process);
         }
     }
 
@@ -245,7 +245,7 @@ abstract class AbstractKernel implements KernelInterface
         }
     }
 
-    private function addProcess(int $pid, ProcessInterface $process)
+    private function enqueueProcess(int $pid, ProcessInterface $process)
     {
         $process->setPid($pid);
 

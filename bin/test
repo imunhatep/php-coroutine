@@ -38,11 +38,13 @@ function logUsedMemory()
     };
 }
 
-$dispatcher = new Dispatcher([
-    new \App\Controller\DummyController()
-]);
-
-$server = new Server('127.0.0.1', 8000, $dispatcher);
+$server = new Server(
+    '127.0.0.1',
+    8000,
+    new Dispatcher([
+        new \App\Controller\DummyController()
+    ])
+);
 
 /** @var KernelInterface $scheduler */
 $scheduler = new KernelLoop;

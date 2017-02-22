@@ -142,6 +142,12 @@ class Server
         return $contents;
     }
 
+    /**
+     * @param $data
+     *
+     * @return ServerRequestInterface
+     * @throws \InvalidArgumentException
+     */
     protected function parseRequest($data): ServerRequestInterface
     {
         /** @var array $meta */
