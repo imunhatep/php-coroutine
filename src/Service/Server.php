@@ -49,7 +49,7 @@ class Server
             yield $this->waitIoRead($socket);
 
             $clientSocket = stream_socket_accept($socket, 0);
-            yield newCallback($this->handleClient($clientSocket));
+            yield KernelCall::callback($this->handleClient($clientSocket));
         }
     }
 

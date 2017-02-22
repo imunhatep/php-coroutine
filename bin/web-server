@@ -4,23 +4,11 @@ set_time_limit(0);
 
 (@include_once __DIR__.'/../vendor/autoload.php') || @include_once __DIR__.'/../../../autoload.php';
 
-use App\Entity\KernelCall;
-use App\Entity\ProcessInterface;
 use App\Service\Kernel\KernelInterface;
 use App\Service\KernelLoop;
 use App\Service\MemoryLogger;
 use App\Service\Server;
 use mindplay\middleman\Dispatcher;
-
-function newCallback(\Generator $coroutine): callable
-{
-    return new KernelCall(
-        function (ProcessInterface $task, KernelInterface $scheduler) use ($coroutine) {
-            $task->setSendValue($scheduler->schedule($coroutine));
-            $scheduler->scheduleProcess($task);
-        }
-    );
-}
 
 $server = new Server(
     '127.0.0.1',
