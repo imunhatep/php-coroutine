@@ -22,7 +22,7 @@ class Server
     /** @var int */
     private $port;
 
-    /** @var Dispatcher  */
+    /** @var Dispatcher */
     private $dispatcher;
 
     function __construct(string $host, int $port, Dispatcher $dispatcher)
@@ -82,23 +82,40 @@ class Server
         yield $this->waitIoWrite($socket);
 
         $this->sendResponse($socket, $response);
+
         stream_socket_shutdown($socket, STREAM_SHUT_RDWR);
+        fclose($socket);
     }
 
     protected function sendResponse($socket, ResponseInterface $response)
     {
+        $rawBody = (string)$response->getBody()."\n";
+
+        $httpHeader = sprintf(
+            "HTTP/%s %d %s\r\n",
+            $response->getProtocolVersion(),
+            $response->getStatusCode(),
+            $response->getReasonPhrase()
+        );
+
         $rawHeaders = (new Map)
-            ->setAll($response->getHeaders())
+            ->setAll(
+                $response
+                    ->withHeader('Content-Length', strlen($rawBody))
+                    ->withHeader('Connection', 'close')
+                    ->getHeaders()
+            )
             ->foldLeft(
-                "HTTP/1.1 200 OK\r\n",
-                function(string $memo, string $name, array $value): string {
-                    return $memo . ucfirst($name).': '. implode(';', $value)."\r\n";
+
+                $httpHeader,
+                function (string $memo, string $name, array $value): string {
+                    return $memo.ucfirst($name).': '.implode(';', $value)."\r\n";
                 }
-            );
+            )
+        ;
 
-
-        stream_socket_sendto($socket, trim($rawHeaders, "\n\r"));
-        stream_socket_sendto($socket, "\r\n\r\n" . (string) $response->getBody());
+        stream_socket_sendto($socket, trim($rawHeaders, "\n\r"). "\r\n\r\n");
+        stream_socket_sendto($socket, $rawBody);
     }
 
     protected function readFromSocket($socket): string

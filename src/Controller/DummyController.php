@@ -24,7 +24,7 @@ class DummyController implements MiddlewareInterface
         $body->write('<strong>Hello World!</strong>');
 
         return $response
-            ->withHeader('content-type', 'text/html')
+            ->withHeader('Content-Type', 'text/html')
             ->withBody($body);
     }
 }
