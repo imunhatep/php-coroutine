@@ -51,7 +51,7 @@ class Server
         }
     }
 
-    function waitIoRead($socket): KernelCall
+    protected function waitIoRead($socket): KernelCall
     {
         return new KernelCall(
             function (ProcessInterface $task, KernelInterface $scheduler) use ($socket) {
@@ -60,7 +60,7 @@ class Server
         );
     }
 
-    function waitIoWrite($socket): KernelCall
+    protected function waitIoWrite($socket): KernelCall
     {
         return new KernelCall(
             function (ProcessInterface $task, KernelInterface $scheduler) use ($socket) {
@@ -69,15 +69,23 @@ class Server
         );
     }
 
-    function handleClient($socket): \Generator
+    protected function handleClient($socket): \Generator
     {
         yield $this->waitIoRead($socket);
 
-        /** @var ServerRequestInterface $request */
-        $request = $this->parseRequest($this->readFromSocket($socket));
+        try{
+            /** @var ServerRequestInterface $request */
+            $request = $this->parseRequest($this->readFromSocket($socket));
 
-        /** @var ResponseInterface $response */
-        $response = $this->dispatcher->dispatch($request);
+            /** @var ResponseInterface $response */
+            $response = $this->dispatcher->dispatch($request);
+        }
+        catch(\Exception $e){
+            dump($e->getMessage());
+
+            /** @var ResponseInterface $response */
+            $response = new Response(400);
+        }
 
         yield $this->waitIoWrite($socket);
 
@@ -106,7 +114,6 @@ class Server
                     ->getHeaders()
             )
             ->foldLeft(
-
                 $httpHeader,
                 function (string $memo, string $name, array $value): string {
                     return $memo.ucfirst($name).': '.implode(';', $value)."\r\n";
@@ -114,8 +121,10 @@ class Server
             )
         ;
 
-        stream_socket_sendto($socket, trim($rawHeaders, "\n\r"). "\r\n\r\n");
-        stream_socket_sendto($socket, $rawBody);
+        if($socket) {
+            @stream_socket_sendto($socket, trim($rawHeaders, "\n\r")."\r\n\r\n");
+            @stream_socket_sendto($socket, $rawBody);
+        }
     }
 
     protected function readFromSocket($socket): string
@@ -135,7 +144,13 @@ class Server
 
     protected function parseRequest($data): ServerRequestInterface
     {
-        list($headers, $bodyBuffer) = explode("\r\n\r\n", $data, 2);
+        /** @var array $meta */
+        if($meta = explode("\r\n\r\n", $data, 2) and count($meta) !== 2) {
+            throw new \InvalidArgumentException('Server got broken HTTP request');
+        }
+
+        list($headers, $bodyBuffer) = $meta;
+        unset($meta);
 
         $psrRequest = Psr7\parse_request($headers);
 
@@ -159,5 +174,4 @@ class Server
             $_SERVER
         );
     }
-
 }
