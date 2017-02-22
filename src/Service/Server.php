@@ -5,9 +5,11 @@ use App\Entity\KernelCall;
 use App\Entity\ProcessInterface;
 use App\Service\Kernel\KernelInterface;
 use Collection\Map;
+use Collection\Sequence;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\ServerRequest;
 use mindplay\middleman\Dispatcher;
+use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use RingCentral\Psr7;
@@ -171,7 +173,7 @@ class Server
             $psrRequest->getHeaders()
         );
 
-        return new ServerRequest(
+        $serverRequest = new ServerRequest(
             $psrRequest->getMethod(),
             $psrRequest->getUri(),
             $headers,
@@ -179,5 +181,18 @@ class Server
             $psrRequest->getProtocolVersion(),
             $_SERVER
         );
+
+        $serverRequest = (new Sequence)
+            ->addAll(explode('&', $psrRequest->getUri()->getQuery()))
+            ->foldLeft(
+                $serverRequest,
+                function(ServerRequestInterface $memo, string $keyValuePair): ServerRequestInterface
+                {
+                    list($name, $value) = explode('=', $keyValuePair);
+                    return $memo->withAttribute($name, $value);
+                }
+            );
+
+        return $serverRequest;
     }
 }
