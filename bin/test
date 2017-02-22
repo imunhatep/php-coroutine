@@ -46,8 +46,8 @@ $server = new Server('127.0.0.1', 8000, $dispatcher);
 
 /** @var KernelInterface $scheduler */
 $scheduler = new KernelLoop;
-$scheduler->schedule($server());
 $scheduler->addPeriodicTimer(60, logUsedMemory());
+$scheduler->schedule($server());
 $scheduler->run();
 
 
