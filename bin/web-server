@@ -4,11 +4,12 @@ set_time_limit(0);
 
 (@include_once __DIR__.'/../vendor/autoload.php') || @include_once __DIR__.'/../../../autoload.php';
 
-use App\Entity\ProcessInterface;
-use App\Service\KernelLoop;
 use App\Entity\KernelCall;
-use App\Service\Server;
+use App\Entity\ProcessInterface;
 use App\Service\Kernel\KernelInterface;
+use App\Service\KernelLoop;
+use App\Service\MemoryLogger;
+use App\Service\Server;
 use mindplay\middleman\Dispatcher;
 
 function newCallback(\Generator $coroutine): callable
@@ -21,35 +22,20 @@ function newCallback(\Generator $coroutine): callable
     );
 }
 
-function logUsedMemory()
-{
-    return function () {
-        $mem = memory_get_usage(true);
-        $pMem = memory_get_peak_usage(true);
-
-        dump(
-            sprintf(
-                '[%s] Memory in use: %0.1fM, peak: %0.1fM',
-                date('H:i:s'),
-                ($mem / 1024 / 1024),
-                ($pMem / 1024 / 1024)
-            )
-        );
-    };
-}
-
 $server = new Server(
     '127.0.0.1',
     8000,
-    new Dispatcher([
-        new \App\Request\ServerRequestWrapper(),
-        new \App\Controller\DummyController()
-    ])
+    new Dispatcher(
+        [
+            new \App\Request\ServerRequestWrapper(),
+            new \App\Controller\DummyController(),
+        ]
+    )
 );
 
 /** @var KernelInterface $scheduler */
 $scheduler = new KernelLoop;
-$scheduler->addPeriodicTimer(60, logUsedMemory());
+$scheduler->addPeriodicTimer(60, new MemoryLogger);
 $scheduler->schedule($server());
 $scheduler->run();
 

@@ -34,7 +34,7 @@ function logUsedMemory()
 
 /** @var KernelInterface $scheduler */
 $scheduler = new KernelLoop;
-$scheduler->addPeriodicTimer(5, logUsedMemory());
+$scheduler->addPeriodicTimer(5, logMemory());
 $scheduler->schedule(counter(1, 5));
 $scheduler->schedule(counter(2, 2));
 $scheduler->run();
