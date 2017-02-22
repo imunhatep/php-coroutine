@@ -36,7 +36,7 @@ class Server
 
     function __invoke(): \Generator
     {
-        dump("Starting server at: {$this->host}:{$this->port}...");
+        dump("Starting server at: http://{$this->host}:{$this->port}");
 
         $socket = @stream_socket_server("tcp://{$this->host}:{$this->port}", $errNo, $errStr);
         if (!$socket) {
@@ -83,7 +83,7 @@ class Server
             $response = $this->dispatcher->dispatch($request);
         }
         catch(\Exception $e){
-            dump($e->getMessage());
+            dump('Bad request: ' . $e->getMessage());
 
             /** @var ResponseInterface $response */
             $response = new Response(400);
@@ -145,54 +145,12 @@ class Server
     }
 
     /**
-     * @param $data
+     * @param string $rawRequest
      *
-     * @return ServerRequestInterface
-     * @throws \InvalidArgumentException
+     * @return RequestInterface
      */
-    protected function parseRequest($data): ServerRequestInterface
+    protected function parseRequest(string $rawRequest): RequestInterface
     {
-        /** @var array $meta */
-        if($meta = explode("\r\n\r\n", $data, 2) and count($meta) !== 2) {
-            throw new \InvalidArgumentException('Server got broken HTTP request');
-        }
-
-        list($headers, $bodyBuffer) = $meta;
-        unset($meta);
-
-        $psrRequest = Psr7\parse_request($headers);
-
-        $headers = array_map(
-            function ($val) {
-                if (1 === count($val)) {
-                    $val = $val[0];
-                }
-
-                return $val;
-            },
-            $psrRequest->getHeaders()
-        );
-
-        $serverRequest = new ServerRequest(
-            $psrRequest->getMethod(),
-            $psrRequest->getUri(),
-            $headers,
-            $bodyBuffer,
-            $psrRequest->getProtocolVersion(),
-            $_SERVER
-        );
-
-        $serverRequest = (new Sequence)
-            ->addAll(explode('&', $psrRequest->getUri()->getQuery()))
-            ->foldLeft(
-                $serverRequest,
-                function(ServerRequestInterface $memo, string $keyValuePair): ServerRequestInterface
-                {
-                    list($name, $value) = explode('=', $keyValuePair);
-                    return $memo->withAttribute($name, $value);
-                }
-            );
-
-        return $serverRequest;
+        return Psr7\parse_request($rawRequest);
     }
 }

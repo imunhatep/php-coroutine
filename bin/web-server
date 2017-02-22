@@ -42,6 +42,7 @@ $server = new Server(
     '127.0.0.1',
     8000,
     new Dispatcher([
+        new \App\Request\ServerRequestWrapper(),
         new \App\Controller\DummyController()
     ])
 );
