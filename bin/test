@@ -15,26 +15,9 @@ function counter(int $id, int $till = 10): \Generator
     }
 }
 
-function logUsedMemory()
-{
-    return function () {
-        $mem = memory_get_usage(true);
-        $pMem = memory_get_peak_usage(true);
-
-        dump(
-            sprintf(
-                '[%s] Memory in use: %0.1fM, peak: %0.1fM',
-                date('H:i:s'),
-                ($mem / 1024 / 1024),
-                ($pMem / 1024 / 1024)
-            )
-        );
-    };
-}
-
 /** @var KernelInterface $scheduler */
 $scheduler = new KernelLoop;
-$scheduler->addPeriodicTimer(5, logMemory());
+$scheduler->addPeriodicTimer(5, new \App\Service\MemoryLogger);
 $scheduler->schedule(counter(1, 5));
 $scheduler->schedule(counter(2, 2));
 $scheduler->run();
