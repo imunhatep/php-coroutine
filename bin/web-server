@@ -4,19 +4,20 @@ set_time_limit(0);
 
 (@include_once __DIR__.'/../vendor/autoload.php') || @include_once __DIR__.'/../../../autoload.php';
 
+use App\Routing\RouteProvider;
 use App\Service\Kernel\KernelInterface;
 use App\Service\KernelLoop;
 use App\Service\MemoryLogger;
 use App\Service\Server;
+
 use mindplay\middleman\Dispatcher;
 
 $server = new Server(
-    '127.0.0.1',
+    '0.0.0.0',
     8000,
     new Dispatcher(
         [
-            new \App\Request\ServerRequestWrapper(),
-            new \App\Controller\DummyController(),
+            new \Middlewares\AuraRouter(RouteProvider::build()),
         ]
     )
 );

@@ -77,16 +77,14 @@ class Server
 
         try{
             /** @var ServerRequestInterface $request */
-            $request = $this->parseRequest($this->readFromSocket($socket));
+            $request = $this->getServerRequest($this->readFromSocket($socket));
 
             /** @var ResponseInterface $response */
             $response = $this->dispatcher->dispatch($request);
         }
-        catch(\Exception $e){
-            dump('Bad request: ' . $e->getMessage());
-
+        catch(\Throwable $e){
             /** @var ResponseInterface $response */
-            $response = new Response(400);
+            $response = new Response(500, ['Content-Type' => 'text/html'], $e->getMessage());
         }
 
         yield $this->waitIoWrite($socket);
@@ -147,10 +145,49 @@ class Server
     /**
      * @param string $rawRequest
      *
-     * @return RequestInterface
+     * @return ServerRequestInterface
      */
-    protected function parseRequest(string $rawRequest): RequestInterface
+    protected function getServerRequest(string $rawRequest): ServerRequestInterface
     {
-        return Psr7\parse_request($rawRequest);
+        $request = Psr7\parse_request($rawRequest);
+
+        $headers = array_map(
+            function ($val) {
+                if (1 === count($val)) {
+                    $val = $val[0];
+                }
+
+                return $val;
+            },
+            $request->getHeaders()
+        );
+
+        $serverRequest = new ServerRequest(
+            $request->getMethod(),
+            $request->getUri(),
+            $headers,
+            $request->getBody(),
+            $request->getProtocolVersion(),
+            $_SERVER
+        );
+
+        $serverRequest = (new Sequence)
+            ->addAll(explode('&', $request->getUri()->getQuery()))
+            ->filter(
+                function(string $keyValuePair): bool
+                {
+                    return trim($keyValuePair) !== '';
+                }
+            )
+            ->foldLeft(
+                $serverRequest,
+                function(ServerRequestInterface $memo, string $keyValuePair): ServerRequestInterface
+                {
+                    list($name, $value) = explode('=', $keyValuePair);
+                    return $memo->withAttribute($name, $value);
+                }
+            );
+
+        return $serverRequest;
     }
 }
