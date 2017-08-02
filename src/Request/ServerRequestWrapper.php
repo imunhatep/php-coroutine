@@ -32,6 +32,7 @@ class ServerRequestWrapper implements MiddlewareInterface
             $request->getHeaders()
         );
 
+        /** @var ServerRequestInterface $serverRequest */
         $serverRequest = new ServerRequest(
             $request->getMethod(),
             $request->getUri(),
@@ -47,11 +48,12 @@ class ServerRequestWrapper implements MiddlewareInterface
                 $serverRequest,
                 function(ServerRequestInterface $memo, string $keyValuePair): ServerRequestInterface
                 {
-                    list($name, $value) = explode('=', $keyValuePair);
+                    list($name, $value) = explode('=', $keyValuePair, 2) + [null,null];
                     return $memo->withAttribute($name, $value);
                 }
             );
 
+        dump($serverRequest->getAttributes());
         return $serverRequest;
     }
 }

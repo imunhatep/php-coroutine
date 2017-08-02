@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Entity;
 
 class TickProcess extends Process
@@ -7,7 +8,7 @@ class TickProcess extends Process
 
     static function instance()
     {
-        if(!static::$instance){
+        if (!static::$instance) {
             static::$instance = new static;
         }
 
@@ -16,7 +17,7 @@ class TickProcess extends Process
 
     function __construct()
     {
-        $tick = function (): \Generator {
+        $tick = function(): \Generator {
             while (true) {
                 usleep(1000);
                 yield;

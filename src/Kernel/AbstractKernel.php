@@ -1,5 +1,5 @@
 <?php
-namespace App\Service\Kernel;
+namespace App\Kernel;
 
 use App\Entity\KernelCall;
 use App\Entity\Process;

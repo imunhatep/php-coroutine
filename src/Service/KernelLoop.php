@@ -2,7 +2,7 @@
 namespace App\Service;
 
 use App\Entity\Process;
-use App\Service\Kernel\AbstractKernel;
+use App\Kernel\AbstractKernel;
 
 class KernelLoop extends AbstractKernel
 {
