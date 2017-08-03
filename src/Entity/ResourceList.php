@@ -39,7 +39,7 @@ class ResourceList
             );
     }
 
-    function add($socket, ProcessInterface $task): ResourceList
+    function add($socket, TaskInterface $task): ResourceList
     {
         if (!is_resource($socket)) {
             throw new \InvalidArgumentException('ResourceList::add() expects a valid IO resource as first argument');

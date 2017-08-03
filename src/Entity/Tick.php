@@ -2,7 +2,7 @@
 
 namespace App\Entity;
 
-class TickProcess extends Process
+class Tick extends Task
 {
     static protected $instance;
 
@@ -15,11 +15,11 @@ class TickProcess extends Process
         return static::$instance;
     }
 
-    function __construct()
+    function __construct(int $ttl = 100)
     {
-        $tick = function(): \Generator {
+        $tick = function() use ($ttl): \Generator {
             while (true) {
-                usleep(1000);
+                usleep($ttl);
                 yield;
             }
         };

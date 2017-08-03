@@ -1,7 +1,7 @@
 <?php
 namespace App\Entity;
 
-interface ProcessInterface
+interface TaskInterface
 {
     function __invoke();
 
