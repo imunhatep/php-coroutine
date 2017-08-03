@@ -1,5 +1,5 @@
 <?php
-namespace App\Service;
+namespace Coroutine\Service;
 
 class MemoryLogger
 {

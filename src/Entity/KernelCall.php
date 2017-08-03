@@ -1,7 +1,7 @@
 <?php
-namespace App\Entity;
+namespace Coroutine\Entity;
 
-use App\Kernel\KernelInterface;
+use Coroutine\Kernel\KernelInterface;
 
 class KernelCall
 {

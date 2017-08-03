@@ -1,11 +1,11 @@
 <?php
-namespace App\Kernel;
+namespace Coroutine\Kernel;
 
-use App\Entity\KernelCall;
-use App\Entity\Task;
-use App\Entity\TaskInterface;
-use App\Entity\ResourceList;
-use App\Entity\Tick;
+use Coroutine\Entity\KernelCall;
+use Coroutine\Entity\Task;
+use Coroutine\Entity\TaskInterface;
+use Coroutine\Entity\ResourceList;
+use Coroutine\Entity\Tick;
 use Collection\Map;
 use Collection\MapInterface;
 use React\EventLoop\Timer\Timer;

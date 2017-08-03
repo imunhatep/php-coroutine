@@ -4,8 +4,8 @@ set_time_limit(0);
 
 (@include_once __DIR__.'/../vendor/autoload.php') || @include_once __DIR__.'/../../../autoload.php';
 
-use App\Kernel\KernelInterface;
-use App\Service\KernelLoop;
+use Coroutine\Kernel\KernelInterface;
+use Coroutine\Service\KernelLoop;
 
 function counter(int $id, int $till = 10): \Generator
 {

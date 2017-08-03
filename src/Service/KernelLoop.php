@@ -1,8 +1,8 @@
 <?php
-namespace App\Service;
+namespace Coroutine\Service;
 
-use App\Entity\Task;
-use App\Kernel\AbstractKernel;
+use Coroutine\Entity\Task;
+use Coroutine\Kernel\AbstractKernel;
 
 class KernelLoop extends AbstractKernel
 {

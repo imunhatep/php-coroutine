@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Entity;
+namespace Coroutine\Entity;
 
 class Tick extends Task
 {

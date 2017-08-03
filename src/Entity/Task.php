@@ -1,5 +1,5 @@
 <?php
-namespace App\Entity;
+namespace Coroutine\Entity;
 
 class Task implements TaskInterface
 {

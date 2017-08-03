@@ -1,5 +1,5 @@
 <?php
-namespace App\Entity;
+namespace Coroutine\Entity;
 
 use Collection\Map;
 use Collection\MapInterface;

@@ -4,8 +4,7 @@ set_time_limit(0);
 
 (@include_once __DIR__.'/../vendor/autoload.php') || @include_once __DIR__.'/../../../autoload.php';
 
-use App\Kernel\KernelInterface;
-use App\Service\KernelLoop;
+use Coroutine\Service\KernelLoop;
 
 function echoTimes($msg, $max) {
     for ($i = 1; $i <= $max; ++$i) {

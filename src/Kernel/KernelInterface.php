@@ -1,7 +1,7 @@
 <?php
-namespace App\Kernel;
+namespace Coroutine\Kernel;
 
-use App\Entity\TaskInterface;
+use Coroutine\Entity\TaskInterface;
 use React\EventLoop\LoopInterface;
 
 interface KernelInterface extends LoopInterface
