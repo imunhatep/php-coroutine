@@ -1,8 +1,8 @@
 <?php
-namespace App\Service;
+namespace Coroutine\Service;
 
-use App\Entity\Process;
-use App\Service\Kernel\AbstractKernel;
+use Coroutine\Entity\Task;
+use Coroutine\Kernel\AbstractKernel;
 
 class KernelLoop extends AbstractKernel
 {
@@ -14,7 +14,7 @@ class KernelLoop extends AbstractKernel
      */
     public function addReadStream($stream, callable $listener)
     {
-        $this->handleIoRead($stream, new Process($this->callableToGenerator($listener)));
+        $this->handleIoRead($stream, new Task($this->callableToGenerator($listener)));
     }
 
     /**
@@ -25,7 +25,7 @@ class KernelLoop extends AbstractKernel
      */
     public function addWriteStream($stream, callable $listener)
     {
-        $this->handleIoWrite($stream, new Process($this->callableToGenerator($listener)));
+        $this->handleIoWrite($stream, new Task($this->callableToGenerator($listener)));
     }
 
     /**

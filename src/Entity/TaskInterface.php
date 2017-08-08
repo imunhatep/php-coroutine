@@ -1,7 +1,7 @@
 <?php
-namespace App\Entity;
+namespace Coroutine\Entity;
 
-interface ProcessInterface
+interface TaskInterface
 {
     function __invoke();
 

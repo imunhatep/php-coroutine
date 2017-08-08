@@ -4,8 +4,8 @@ set_time_limit(0);
 
 (@include_once __DIR__.'/../vendor/autoload.php') || @include_once __DIR__.'/../../../autoload.php';
 
-use App\Service\Kernel\KernelInterface;
-use App\Service\KernelLoop;
+use Coroutine\Kernel\KernelInterface;
+use Coroutine\Service\KernelLoop;
 
 function counter(int $id, int $till = 10): \Generator
 {
@@ -15,12 +15,10 @@ function counter(int $id, int $till = 10): \Generator
     }
 }
 
+
 /** @var KernelInterface $scheduler */
 $scheduler = new KernelLoop;
-$scheduler->addPeriodicTimer(5, new \App\Service\MemoryLogger);
+//$scheduler->addPeriodicTimer(5, new \App\Service\MemoryLogger);
 $scheduler->schedule(counter(1, 5));
 $scheduler->schedule(counter(2, 2));
 $scheduler->run();
-
-
-

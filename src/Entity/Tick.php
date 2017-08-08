@@ -1,24 +1,25 @@
 <?php
-namespace App\Entity;
 
-class TickProcess extends Process
+namespace Coroutine\Entity;
+
+class Tick extends Task
 {
     static protected $instance;
 
     static function instance()
     {
-        if(!static::$instance){
+        if (!static::$instance) {
             static::$instance = new static;
         }
 
         return static::$instance;
     }
 
-    function __construct()
+    function __construct(int $ttl = 100)
     {
-        $tick = function (): \Generator {
+        $tick = function() use ($ttl): \Generator {
             while (true) {
-                usleep(1000);
+                usleep($ttl);
                 yield;
             }
         };

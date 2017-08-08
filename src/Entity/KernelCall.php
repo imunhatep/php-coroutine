@@ -1,16 +1,16 @@
 <?php
-namespace App\Entity;
+namespace Coroutine\Entity;
 
-use App\Service\Kernel\KernelInterface;
+use Coroutine\Kernel\KernelInterface;
 
 class KernelCall
 {
     static function callback(\Generator $coroutine): KernelCall
     {
         return new static(
-            function (ProcessInterface $task, KernelInterface $scheduler) use ($coroutine) {
+            function (TaskInterface $task, KernelInterface $scheduler) use ($coroutine) {
                 $task->setSendValue($scheduler->schedule($coroutine));
-                $scheduler->scheduleProcess($task);
+                $scheduler->scheduleTask($task);
             }
         );
     }
@@ -22,7 +22,7 @@ class KernelCall
         $this->callback = $callback;
     }
 
-    function __invoke(ProcessInterface $process, KernelInterface $kernel)
+    function __invoke(TaskInterface $process, KernelInterface $kernel)
     {
         $callback = $this->callback; // Can't call it directly in PHP :/
         return $callback($process, $kernel);
