@@ -6,8 +6,12 @@ use React\EventLoop\LoopInterface;
 
 interface KernelInterface extends LoopInterface
 {
-    function schedule(\Generator $task): int;
-    function scheduleTask(TaskInterface $process): int;
+    const TASK_DELAY_USEC = 10000;
+    const TASK_IO_POLLING = 'kernel:io:polling';
+
+    function schedule(\Generator $task, string $title = 'unknown'): int;
+    function scheduleTask(TaskInterface $task): int;
+
     function kill(int $pid);
 
     function handleIoRead($socket, TaskInterface $task);

@@ -5,7 +5,11 @@ interface TaskInterface
 {
     function __invoke();
 
+    function getTitle(): string;
+
     function getPid(): int;
+
+    function hasPid(): bool;
 
     function setPid(int $pid);
 

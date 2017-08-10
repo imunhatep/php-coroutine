@@ -5,11 +5,11 @@ use Coroutine\Kernel\KernelInterface;
 
 class KernelCall
 {
-    static function callback(\Generator $coroutine): KernelCall
+    static function callback(\Generator $coroutine, string $title): KernelCall
     {
         return new static(
-            function (TaskInterface $task, KernelInterface $scheduler) use ($coroutine) {
-                $task->setSendValue($scheduler->schedule($coroutine));
+            function (TaskInterface $task, KernelInterface $scheduler) use ($coroutine, $title) {
+                $task->setSendValue($scheduler->schedule($coroutine, $title));
                 $scheduler->scheduleTask($task);
             }
         );

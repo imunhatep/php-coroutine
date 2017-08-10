@@ -14,6 +14,8 @@ use React\EventLoop\Timer\Timers;
 
 abstract class AbstractKernel implements KernelInterface
 {
+    const DEBUG = true;
+
     /** @var int */
     protected $taskNextId;
 
@@ -44,16 +46,18 @@ abstract class AbstractKernel implements KernelInterface
         $this->ioWriteQueue = new ResourceList;
     }
 
-    function schedule(\Generator $task): int
+    function schedule(\Generator $task, string $title = 'unknown'): int
     {
-        return $this->scheduleTask(new Task($task));
+        return $this->scheduleTask(new Task($task, $title));
     }
 
-    function scheduleTask(TaskInterface $process): int
+    function scheduleTask(TaskInterface $task): int
     {
-        $this->enqueueTask(++$this->taskNextId, $process);
+        !$task->hasPid() and $task->setPid(++$this->taskNextId);
 
-        return $this->taskNextId;
+        $this->enqueueTask($task);
+
+        return $task->getPid();
     }
 
     /**
@@ -144,7 +148,7 @@ abstract class AbstractKernel implements KernelInterface
     {
         $this->running = true;
 
-        $this->schedule($this->ioPollTask());
+        $this->schedule($this->ioPollTask(), KernelInterface::TASK_IO_POLLING);
 
         while ($this->running) {
             $this->timerQueue->tick();
@@ -171,7 +175,16 @@ abstract class AbstractKernel implements KernelInterface
         /** @var Task $task */
         $task = $this->dequeueTask();
 
-        //dump('Tick pid: '. $process->getPid());
+        if(static::DEBUG and $title = $task->getTitle() and $title !== KernelInterface::TASK_IO_POLLING){
+            dump(
+                sprintf(
+                    '[%s] Tick task pid[%d]: %s',
+                    date('H:i:s'),
+                    $task->getPid(),
+                    $task->getTitle()
+                )
+            );
+        }
 
         $retVal = $task();
         if ($retVal instanceof KernelCall) {
@@ -180,21 +193,21 @@ abstract class AbstractKernel implements KernelInterface
             }
             catch (\Exception $e) {
                 $task->setException($e);
-                $this->scheduleTask($task);
+                $this->enqueueTask($task);
             }
 
             return;
         }
 
         if (!$task->isFinished()) {
-            $this->enqueueTask($task->getPid(), $task);
+            $this->enqueueTask($task);
         }
     }
 
     protected function ioPollTask(): \Generator
     {
         while (true) {
-            $this->ioPoll($this->taskQueue->isEmpty() ? 10000 : 0);
+            $this->ioPoll($this->taskQueue->isEmpty() ? KernelInterface::TASK_DELAY_USEC : 0);
             yield;
         }
     }
@@ -202,7 +215,7 @@ abstract class AbstractKernel implements KernelInterface
     protected function timerTask(): \Generator
     {
         while (true) {
-            $this->ioPoll($this->taskQueue->isEmpty() ? 10000 : 0);
+            $this->ioPoll($this->taskQueue->isEmpty() ? KernelInterface::TASK_DELAY_USEC : 0);
             yield;
         }
     }
@@ -210,11 +223,11 @@ abstract class AbstractKernel implements KernelInterface
     protected function ioPoll(int $usec)
     {
         $rSocks = $this->ioReadQueue
-            ->filterTimedOut(function ($s) { dump('Dead read resource: #' . (int)$s); })
+            ->filterTimedOut(function ($s) { self::DEBUG and dump('Dead read resource: #' . (int)$s); })
             ->all();
 
         $wSocks = $this->ioWriteQueue
-            ->filterTimedOut(function ($s) { dump('Dead write resource: #' . (int)$s); })
+            ->filterTimedOut(function ($s) { self::DEBUG and dump('Dead write resource: #' . (int)$s); })
             ->all();
 
         //dump(count($rSocks).' read, '.count($wSocks).' write');
@@ -233,8 +246,9 @@ abstract class AbstractKernel implements KernelInterface
             list(, $processes) = $this->ioReadQueue->get($socket)->get();
             $this->ioReadQueue->remove($socket);
 
-            foreach ($processes as $process) {
-                $this->scheduleTask($process);
+            /** @var TaskInterface $task */
+            foreach ($processes as $task) {
+                $this->enqueueTask($task);
             }
         }
 
@@ -242,21 +256,22 @@ abstract class AbstractKernel implements KernelInterface
             list(, $processes) = $this->ioWriteQueue->get($socket)->get();
             $this->ioWriteQueue->remove($socket);
 
-            foreach ($processes as $process) {
-                $this->scheduleTask($process);
+            /** @var TaskInterface $process */
+            foreach ($processes as $task) {
+                $this->enqueueTask($task);
             }
         }
     }
 
-    private function enqueueTask(int $pid, TaskInterface $process)
+    private function enqueueTask(TaskInterface $task)
     {
-        $process->setPid($pid);
-
+        $pid = $task->getPid();
+        
         if ($this->taskQueue->containsKey($pid)) {
-            throw new \RuntimeException('Kernel panic: task with given id already in queue');
+            throw new \RuntimeException(sprintf('Kernel panic: task with given pid[%d] already in queue', $pid));
         }
 
-        $this->taskQueue->set($pid, $process);
+        $this->taskQueue->set($pid, $task);
     }
 
     private function dequeueTask(): Task

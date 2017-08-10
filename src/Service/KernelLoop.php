@@ -14,7 +14,7 @@ class KernelLoop extends AbstractKernel
      */
     public function addReadStream($stream, callable $listener)
     {
-        $this->handleIoRead($stream, new Task($this->callableToGenerator($listener)));
+        $this->handleIoRead($stream, new Task($this->callableToGenerator($listener), 'kernel:read:stream'));
     }
 
     /**
@@ -25,7 +25,7 @@ class KernelLoop extends AbstractKernel
      */
     public function addWriteStream($stream, callable $listener)
     {
-        $this->handleIoWrite($stream, new Task($this->callableToGenerator($listener)));
+        $this->handleIoWrite($stream, new Task($this->callableToGenerator($listener), 'kernel:write:stream'));
     }
 
     /**
