@@ -15,16 +15,16 @@ class Tick extends Task
         return static::$instance;
     }
 
-    function __construct(int $ttl = 100)
+    function __construct(int $usecTtl = 10000)
     {
-        $tick = function() use ($ttl): \Generator {
+        $tick = function() use ($usecTtl): \Generator {
             while (true) {
-                usleep($ttl);
+                usleep($usecTtl);
                 yield;
             }
         };
 
-        parent::__construct($tick());
+        parent::__construct($tick(), 'tik-tak');
         $this->setPid(0);
     }
 }

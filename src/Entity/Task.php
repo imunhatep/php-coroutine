@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 namespace Coroutine\Entity;
 
 class Task implements TaskInterface
@@ -18,10 +20,14 @@ class Task implements TaskInterface
     /** @var \Exception */
     protected $exception;
 
-    function __construct(\Generator $coroutine)
+    /** @var string */
+    protected $title;
+
+    function __construct(\Generator $coroutine, string $title)
     {
         $this->coroutine = $this->stacked($coroutine);
         $this->beforeFirstYield = true;
+        $this->title = $title;
     }
 
     function __invoke()
@@ -45,13 +51,27 @@ class Task implements TaskInterface
         }
     }
 
+    function getTitle(): string
+    {
+        return $this->title;
+    }
+
     function getPid(): int
     {
         return $this->pid;
     }
 
+    function hasPid(): bool
+    {
+        return $this->pid !== null;
+    }
+
     function setPid(int $pid)
     {
+        if ($this->pid and $this->pid !== $pid) {
+            throw new \RuntimeException(sprintf('Cannot change task pid %s => %s', $this->pid, $pid));
+        }
+
         $this->pid = $pid;
     }
 
