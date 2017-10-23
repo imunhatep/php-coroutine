@@ -93,7 +93,11 @@ class ResourceList
                         $debug($socket, $processes);
                     }
 
-                    return $meta['timed_out'];
+                    if($endOfFile = feof($socket)){
+                        $debug($socket, $processes);
+                    }
+
+                    return $meta['timed_out'] or $endOfFile;
                 }
             );
 
