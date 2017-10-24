@@ -1,4 +1,5 @@
 <?php
+
 namespace Coroutine\Kernel;
 
 use Coroutine\Entity\KernelCall;
@@ -14,7 +15,7 @@ use React\EventLoop\Timer\Timers;
 
 abstract class AbstractKernel implements KernelInterface
 {
-    const DEBUG = true;
+    const DEBUG = false;
 
     /** @var int */
     protected $taskNextId;
@@ -175,7 +176,7 @@ abstract class AbstractKernel implements KernelInterface
         /** @var Task $task */
         $task = $this->dequeueTask();
 
-        if(static::DEBUG and $title = $task->getTitle() and $title !== KernelInterface::TASK_IO_POLLING){
+        if (static::DEBUG and $title = $task->getTitle() and $title !== KernelInterface::TASK_IO_POLLING) {
             dump(
                 sprintf(
                     '[%s] Tick task pid[%d]: %s',
@@ -222,15 +223,9 @@ abstract class AbstractKernel implements KernelInterface
 
     protected function ioPoll(int $usec)
     {
-        $rSocks = $this->ioReadQueue
-            ->filterTimedOut(function ($s) { self::DEBUG and dump('Dead read resource: #' . (int)$s); })
-            ->all();
 
-        $wSocks = $this->ioWriteQueue
-            ->filterTimedOut(function ($s) { self::DEBUG and dump('Dead write resource: #' . (int)$s); })
-            ->all();
-
-        //dump(count($rSocks).' read, '.count($wSocks).' write');
+        $rSocks = $this->ioReadQueue->all();
+        $wSocks = $this->ioWriteQueue->all();
 
         if (!$rSocks and !$wSocks) {
             return;
@@ -239,6 +234,9 @@ abstract class AbstractKernel implements KernelInterface
         // dummy
         $eSocks = [];
         if (!stream_select($rSocks, $wSocks, $eSocks, 0, $usec)) {
+            $this->ioReadQueue->filterDead();
+            $this->ioWriteQueue->filterDead();
+
             return;
         }
 
@@ -266,7 +264,7 @@ abstract class AbstractKernel implements KernelInterface
     private function enqueueTask(TaskInterface $task)
     {
         $pid = $task->getPid();
-        
+
         if ($this->taskQueue->containsKey($pid)) {
             throw new \RuntimeException(sprintf('Kernel panic: task with given pid[%d] already in queue', $pid));
         }

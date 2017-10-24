@@ -1,8 +1,10 @@
 <?php
+
 namespace Coroutine\Entity;
 
 use Collection\Map;
 use Collection\MapInterface;
+use Coroutine\Kernel\AbstractKernel;
 use PhpOption\Option;
 
 class ResourceList
@@ -45,12 +47,20 @@ class ResourceList
             throw new \InvalidArgumentException('ResourceList::add() expects a valid IO resource as first argument');
         }
 
+        AbstractKernel::DEBUG and dump(
+            sprintf(
+                '[%s] Resource[%d] task pid[%d]: %s',
+                date('H:i:s'),
+                (int)$socket,
+                $task->getPid(),
+                $task->getTitle()
+            )
+        );
+
         $resourceId = (int)$socket;
 
         /** @var array $resourceTuple */
-        $resourceTuple = $this->resources->containsKey($resourceId)
-            ? $this->resources->get($resourceId)->get()
-            : [$socket, []];
+        $resourceTuple = $this->resources->get($resourceId)->getOrElse([$socket, []]);
 
         $resourceTuple[1][] = $task;
 
@@ -80,24 +90,34 @@ class ResourceList
         return $this->resources->length();
     }
 
-    function filterTimedOut(callable $debug = null): ResourceList
+    function filterDead(): ResourceList
     {
-        $this
+        $debug = AbstractKernel::DEBUG;
+
+        $this->resources = $this
             ->resources
-            ->filterNot(
+            ->filter(
                 function (int $k, array $resourceTuple) use ($debug): bool {
                     list($socket, $processes) = $resourceTuple;
 
+                    if (!empty($processes)) {
+                        return true;
+                    }
+
+                    if ($endOfFile = feof($socket) and $debug) {
+                        dump('Dead by eof resource: #' . (int)$socket);
+
+                        return false;
+                    }
+
                     $meta = stream_get_meta_data($socket);
                     if ($meta['timed_out'] and $debug) {
-                        $debug($socket, $processes);
+                        dump('Dead by timeout resource: #' . (int)$socket);
+
+                        return false;
                     }
 
-                    if($endOfFile = feof($socket)){
-                        $debug($socket, $processes);
-                    }
-
-                    return $meta['timed_out'] or $endOfFile;
+                    return true;
                 }
             );
 

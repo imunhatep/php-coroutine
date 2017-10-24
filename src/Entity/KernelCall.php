@@ -22,9 +22,9 @@ class KernelCall
         $this->callback = $callback;
     }
 
-    function __invoke(TaskInterface $process, KernelInterface $kernel)
+    function __invoke(TaskInterface $task, KernelInterface $kernel)
     {
         $callback = $this->callback; // Can't call it directly in PHP :/
-        return $callback($process, $kernel);
+        return $callback($task, $kernel);
     }
 }

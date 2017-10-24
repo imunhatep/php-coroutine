@@ -6,7 +6,7 @@ use React\EventLoop\LoopInterface;
 
 interface KernelInterface extends LoopInterface
 {
-    const TASK_DELAY_USEC = 10000;
+    const TASK_DELAY_USEC = 50000;
     const TASK_IO_POLLING = 'kernel:io:polling';
 
     function schedule(\Generator $task, string $title = 'unknown'): int;
