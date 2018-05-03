@@ -4,8 +4,7 @@
     "keywords": ["coroutine", "async", "yield"],
     "license": "GPL-3.0",
     "authors": [
-        {"name": "Artyom Sukharev", "email": "aly.casus@gmail.com"},
-        {"name": "Nikita Popov", "email": "nikic@php.net"}
+        {"name": "Artyom Sukharev"}
     ],
     "config": {
         "bin-dir": "bin",

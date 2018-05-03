@@ -13,7 +13,7 @@ use React\EventLoop\Timer\Timer;
 use React\EventLoop\Timer\TimerInterface;
 use React\EventLoop\Timer\Timers;
 
-abstract class AbstractKernel implements KernelInterface
+abstract class AbstractKernel
 {
     const DEBUG = false;
 

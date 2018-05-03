@@ -4,7 +4,7 @@ namespace Coroutine\Kernel;
 use Coroutine\Entity\TaskInterface;
 use React\EventLoop\LoopInterface;
 
-interface KernelInterface extends LoopInterface
+interface KernelInterface
 {
     const TASK_DELAY_USEC = 50000;
     const TASK_IO_POLLING = 'kernel:io:polling';

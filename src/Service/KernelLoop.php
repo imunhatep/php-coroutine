@@ -3,8 +3,10 @@ namespace Coroutine\Service;
 
 use Coroutine\Entity\Task;
 use Coroutine\Kernel\AbstractKernel;
+use Coroutine\Kernel\KernelInterface;
+use React\EventLoop\LoopInterface;
 
-class KernelLoop extends AbstractKernel
+class KernelLoop extends AbstractKernel implements KernelInterface, LoopInterface
 {
     /**
      * Register a listener to be notified when a stream is ready to read.
